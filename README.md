@@ -1,1 +1,1 @@
-# plataform.store.account-resource
+# platform.store.account-resource
