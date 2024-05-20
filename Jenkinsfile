@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    environment {
-        K8S_PORT = 51971
-    }
     stages {
         stage('Jenkins Account') {
             steps {
@@ -30,8 +27,14 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-                        account.push("${env.BUILD_ID}")
-                        account.push("latest")
+                        try {
+                            account.push("${env.BUILD_ID}")
+                            account.push("latest")
+                        } catch (Exception e) {
+                            echo "Failed to push Docker image: ${e}"
+                            currentBuild.result = 'FAILURE'
+                            throw e
+                        }
                     }
                 }
             }
@@ -39,8 +42,16 @@ pipeline {
         stage('Deploy on k8s') {
             steps {
                 withCredentials([ string(credentialsId: 'minikube-credentials', variable: 'api_token') ]) {
-                    sh 'kubectl --token $api_token --server https://host.docker.internal:55529  --insecure-skip-tls-verify=true apply -f ./k8s/deployment.yaml --validate=false'
-                    sh 'kubectl --token $api_token --server https://host.docker.internal:55529  --insecure-skip-tls-verify=true apply -f ./k8s/service.yaml --validate=false'
+                    script {
+                        try {
+                            sh 'kubectl --token $api_token --server https://host.docker.internal:55529 --insecure-skip-tls-verify=true apply -f ./k8s/deployment.yaml --validate=false'
+                            sh 'kubectl --token $api_token --server https://host.docker.internal:55529 --insecure-skip-tls-verify=true apply -f ./k8s/service.yaml --validate=false'
+                        } catch (Exception e) {
+                            echo "Failed to deploy on Kubernetes: ${e}"
+                            currentBuild.result = 'FAILURE'
+                            throw e
+                        }
+                    }
                 }
             }
         }
