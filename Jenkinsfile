@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        K8S_PORT = 51971
+    }
     stages {
         stage('Jenkins Account') {
             steps {
