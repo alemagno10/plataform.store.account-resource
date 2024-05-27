@@ -19,6 +19,11 @@ spring:
   redis:
     host: ${REDIS_HOST}
     port: ${REDIS_PORT}
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: insper
+      auto-offset-reset: earliest
 
 management:
   endpoints:
@@ -39,3 +44,4 @@ springdoc:
     path: /accounts/v3/api-docs
   swagger-ui:
     path: /accounts/swagger-ui.html
+
